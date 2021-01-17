@@ -192,5 +192,47 @@ def train_classifier(input, output, stab, swing):
         json.dump({i: v for i, v in enumerate(le.classes_)}, fp)
 
 
+@cli.command()
+@click.argument("input", type=click.Path(file_okay=False, exists=True))
+@click.argument("output", type=click.Path(file_okay=False))
+@click.argument("model_input", type=click.Path(file_okay=False, exists=True))
+@click.argument("stab", type=click.Path(dir_okay=True, exists=True))
+@click.argument("swing", type=click.Path(dir_okay=True, exists=True))
+def evaluate_model(input, output, model_input, stab, swing):
+    input = Path(input)
+    model_input = Path(model_input)
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+
+    stab_img = cv.imread(str(stab), cv.IMREAD_GRAYSCALE)
+    swing_img = cv.imread(str(swing), cv.IMREAD_GRAYSCALE)
+
+    with (model_input / "model.pkl").open("rb") as fp:
+        clf = pickle.load(fp)
+    labels = json.loads((model_input / "labels.json").read_text())
+
+    data = []
+    for path in tqdm(sorted(Path(input).glob("**/*.png"))):
+        label_class = path.parent.name
+        img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
+        row = np.append(
+            get_template_features(stab_img, img), get_template_features(swing_img, img)
+        )
+        data.append(row)
+
+    X = np.array(data)
+    y = clf.predict_proba(X)
+    y_label = [labels[str(p)] for p in clf.predict(X)]
+
+    np.savetxt(f"{output}/pred.csv", y, delimiter=",")
+    (output / "pred.json").write_text(json.dumps(y_label))
+
+    xs = list(range(len(data)))
+    for k, v in labels.items():
+        plt.plot(xs, y[:, int(k)], label=v)
+    plt.legend()
+    plt.savefig(f"{output}/probs.png")
+
+
 if __name__ == "__main__":
     cli()
