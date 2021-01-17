@@ -38,6 +38,7 @@ numpy==1.19.5
     #   opencv-python
     #   scikit-learn
     #   scipy
+    #   torch
     #   umap-learn
 opencv-python==4.5.1.48
     # via -r requirements.in
@@ -70,8 +71,12 @@ sklearn==0.0
     # via -r requirements.in
 threadpoolctl==2.1.0
     # via scikit-learn
+torch==1.7.1
+    # via -r requirements.in
 tqdm==4.56.0
     # via -r requirements.in
+typing-extensions==3.7.4.3
+    # via torch
 umap-learn==0.5.0
     # via -r requirements.in
 

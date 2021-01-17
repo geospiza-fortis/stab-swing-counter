@@ -8,3 +8,6 @@ tqdm
 umap-learn
 hdbscan
 sklearn
+
+torch
+# also run pip install --no-deps torchvision
