@@ -3,3 +3,8 @@ numpy
 matplotlib
 click
 tqdm
+
+# clustering data and to find key frames
+umap-learn
+hdbscan
+sklearn
