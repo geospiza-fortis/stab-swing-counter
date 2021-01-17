@@ -1,13 +1,11 @@
-import numpy as np
-import cv2 as cv
-import click
-from pathlib import Path
-from tqdm import tqdm
-
-import matplotlib.pyplot as plt
-import umap
-import hdbscan
 import json
+from pathlib import Path
+
+import click
+import cv2 as cv
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+
 
 # 1080 x 1920
 H = 1080
@@ -80,52 +78,47 @@ def prepare_samples(input, output, frames):
     cv.destroyAllWindows()
 
 
+def mse(a, b):
+    """Mean Squared Error."""
+    return ((a - b) ** 2).mean()
+
+
 @cli.command()
 @click.argument("input", type=click.Path(file_okay=False, exists=True))
 @click.argument("output", type=click.Path(file_okay=False))
-def cluster(input, output):
+@click.argument("stab", type=int)
+@click.argument("swing", type=int)
+def calculate_diff(input, output, stab, swing):
+    input = Path(input)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
 
-    data = []
+    # we know the naming convention
+    def copy_load(idx):
+        name = f"img_{idx:05}.png"
+        img = cv.imread(str(input / name), cv.IMREAD_GRAYSCALE)
+        cv.imwrite(str(output / name), img)
+        return img
+
+    stab_img = copy_load(stab)
+    swing_img = copy_load(swing)
+
+    stab_diff = []
+    swing_diff = []
     for path in tqdm(sorted(Path(input).glob("*.png"))):
-        # assume square images, lets resize for efficiency
         img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
-        img = cv.resize(img, (64, 64))
-        data.append(img.ravel())
-    # create matrix
-    x = np.array(data)
-    print(f"created array of shape {x.shape}")
+        # method may not work well if the background or character position changes
+        stab_diff.append(mse(stab_img, img))
+        swing_diff.append(mse(swing_img, img))
 
-    # https://umap-learn.readthedocs.io/en/latest/clustering.html#
-    # this first one is for visualization
-    standard_embedding = umap.UMAP().fit_transform(x)
+    with (output / "data.json").open("w") as fp:
+        json.dump(dict(stab=stab_diff, swing=swing_diff), fp, indent=2)
 
-    clusterable_embedding = umap.UMAP(
-        n_neighbors=30, min_dist=0.0, n_components=2
-    ).fit_transform(x)
-
-    labels = hdbscan.HDBSCAN(
-        min_samples=10,
-        min_cluster_size=50,
-    ).fit_predict(clusterable_embedding)
-
-    clustered = labels >= 0
-    plt.scatter(
-        standard_embedding[~clustered, 0],
-        standard_embedding[~clustered, 1],
-        c=(0.5, 0.5, 0.5),
-        alpha=0.5,
-    )
-    plt.scatter(
-        standard_embedding[clustered, 0],
-        standard_embedding[clustered, 1],
-        c=labels[clustered],
-        cmap="Spectral",
-    )
-    plt.savefig(f"{output}/plot.png")
-    with (output / "labels.json").open("w") as fp:
-        json.dump(labels.tolist(), fp, indent=2)
+    x = list(range(len(stab_diff)))
+    plt.plot(x, stab_diff, label="stab")
+    plt.plot(x, swing_diff, label="swing")
+    plt.legend()
+    plt.savefig(f"{output}/mse.png")
 
 
 if __name__ == "__main__":
