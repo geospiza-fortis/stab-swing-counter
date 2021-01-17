@@ -5,6 +5,7 @@ import click
 import cv2 as cv
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 # 1080 x 1920
@@ -119,6 +120,76 @@ def calculate_diff(input, output, stab, swing):
     plt.plot(x, swing_diff, label="swing")
     plt.legend()
     plt.savefig(f"{output}/mse.png")
+
+
+# https://docs.opencv.org/master/d4/dc6/tutorial_py_template_matching.html
+def get_template_features(template, img):
+    # squared differences
+    w, h = template.shape[::-1]
+    res = cv.matchTemplate(img, template, cv.TM_SQDIFF)
+    min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
+    # drawing a rectangle is easy, but we just want the features
+    # top_left = min_loc
+    # bottom_right = (top_left[0] + w, top_left[1] + h)
+    # v.rectangle(img,top_left, bottom_right, 255, 2)
+    return np.array([min_val, *min_loc])
+
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import pickle
+
+
+@cli.command()
+@click.argument("input", type=click.Path(file_okay=False, exists=True))
+@click.argument("output", type=click.Path(file_okay=False))
+@click.argument("stab", type=click.Path(dir_okay=True, exists=True))
+@click.argument("swing", type=click.Path(dir_okay=True, exists=True))
+def train_classifier(input, output, stab, swing):
+    input = Path(input)
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+
+    stab_img = cv.imread(str(stab), cv.IMREAD_GRAYSCALE)
+    swing_img = cv.imread(str(swing), cv.IMREAD_GRAYSCALE)
+
+    # use a label encoder instead?
+    data = []
+    labels = []
+    for path in tqdm(sorted(Path(input).glob("**/*.png"))):
+        label_class = path.parent.name
+        img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
+        row = np.append(
+            get_template_features(stab_img, img), get_template_features(swing_img, img)
+        )
+        data.append(row)
+        labels.append(label_class)
+
+    le = LabelEncoder()
+    le.fit(labels)
+    print(list(le.classes_))
+    y = le.transform(labels)
+
+    X = np.array(data)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    clf = LogisticRegression().fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    print(f"accuracy: {acc} with {len(y_test)} samples")
+
+    # retrain on all the data
+    clf = LogisticRegression().fit(X, y)
+    acc = accuracy_score(y, clf.predict(X))
+    print(f"accuracy: {acc} on all data of length {len(y)}")
+
+    with (output / "model.pkl").open("wb") as fp:
+        pickle.dump(clf, fp)
+    with (output / "labels.json").open("w") as fp:
+        # for mapping label back to the original string later
+        json.dump({i: v for i, v in enumerate(le.classes_)}, fp)
 
 
 if __name__ == "__main__":

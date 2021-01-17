@@ -21,6 +21,10 @@ def cluster(input, output):
     for path in tqdm(sorted(Path(input).glob("*.png"))):
         # assume square images, lets resize for efficiency
         img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
+        img = cv.Laplacian(img, cv.CV_64F)
+        cv.imshow("frame", img)
+        if cv.waitKey(1) == ord("q"):
+            break
         img = cv.resize(img, (64, 64))
         data.append(img.ravel())
     # create matrix

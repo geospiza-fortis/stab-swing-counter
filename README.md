@@ -15,3 +15,11 @@ python .\main.py calculate-diff .\data\output\spear_cropped\ .\data\output\spear
 
 .\classifier.py .\data\labeled\spear\ data/model/spear
 ```
+
+Made a few templates based on a small region in the cropped screenshot. I will
+run a template matching algorithm, and then pass the features into a multi-class
+classifier.
+
+```bash
+python .\main.py train-classifier .\data\labeled\spear\ data/model/spear_logistic .\data\templates\stab.png .\data\templates\swing.png
+```
