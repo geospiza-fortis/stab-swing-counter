@@ -233,6 +233,23 @@ def evaluate_model(input, output, model_input, stab, swing):
     plt.legend()
     plt.savefig(f"{output}/probs.png")
 
+    # also create a video
+    # https://stackoverflow.com/questions/43048725/python-creating-video-from-images-using-opencv
+    # ugly hack, use the last img from the previous for loop
+    w, h = img.shape
+    fourcc = cv.VideoWriter_fourcc(*"mp4v")
+    video = cv.VideoWriter(f"{output}/labeled.mp4", fourcc, 60, (w, h))
+    for path, label in tqdm(zip(sorted(Path(input).glob("**/*.png")), y_label)):
+        img = cv.imread(str(path))
+        # write the label at then top of the video
+        # https://docs.opencv.org/master/dc/da5/tutorial_py_drawing_functions.html
+        # https://docs.opencv.org/master/d6/d6e/group__imgproc__draw.html#ga5126f47f883d730f633d74f07456c576
+        font = cv.FONT_HERSHEY_SIMPLEX
+        cv.putText(img, label, (10, 50), font, 2, (0, 0, 0), 2, cv.LINE_AA)
+        video.write(img)
+    cv.destroyAllWindows()
+    video.release()
+
 
 if __name__ == "__main__":
     cli()
