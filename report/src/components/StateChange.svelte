@@ -4,7 +4,17 @@
   import { currentTime, paused } from "../store.js";
 
   let labelData = [];
-  const keys = ["pos", "label", "start", "end", "duration", "stab_pct"];
+  const keys = [
+    "label",
+    "start",
+    "end",
+    "diff",
+    "stab",
+    "swing",
+    "total",
+    "stab_pct",
+    "swing_pct"
+  ];
 
   export let rowId = 0;
   export let paginationSize = 6;
@@ -40,17 +50,22 @@
             start: start,
             end: i,
             // time since the last attack
-            duration: res.length > 0 ? start - res[res.length - 1].start : 0,
-            stab_pct: (
-              (res.filter(x => x.label == "stab").length + (value == "stab")) /
-              (res.length + 1)
-            ).toFixed(2)
+            diff: res.length > 0 ? start - res[res.length - 1].start : 0,
+            stab: res.filter(x => x.label == "stab").length + (value == "stab"),
+            swing:
+              res.filter(x => x.label == "swing").length + (value == "swing"),
+            total: res.length + 1
           });
         }
         start = i;
         value = e;
       }
     }
+    res = res.map(row => ({
+      ...row,
+      stab_pct: (row.stab / row.total).toFixed(2),
+      swing_pct: (row.swing / row.total).toFixed(2)
+    }));
     return res;
   }
 
