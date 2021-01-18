@@ -16,6 +16,7 @@
     predData = Papa.parse(data).data;
     let plot = new Plotly.newPlot(plotElement, transform(predData), {
       xaxis: {
+        range: [0, 1200],
         rangeselector: { visible: true },
         rangeslider: {}
       },
