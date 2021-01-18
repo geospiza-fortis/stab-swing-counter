@@ -12,7 +12,7 @@
 
   // we have to make sure we're in a consistent state when updating the range,
   // otherwise fall prey to infinite loops.
-  $: $paused || (frame = Math.floor($currentTime * 60));
+  $: frame = Math.floor($currentTime * 60);
   $: !$paused && plot && updateRange(plotElement, range, frame);
 
   function updateRange(element, range, frame) {
