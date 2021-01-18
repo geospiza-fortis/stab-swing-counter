@@ -72,7 +72,11 @@
       { responsive: true }
     );
     plotElement.on("plotly_relayout", ev => {
-      range = ev["xaxis.range"];
+      let newRange = ev["xaxis.range"];
+      if (!newRange) {
+        return;
+      }
+      range = newRange;
     });
     plotElement.on("plotly_click", ev => {
       // grab an arbitrary trace
