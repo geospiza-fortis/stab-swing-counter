@@ -2,10 +2,10 @@
   import { zip } from "lodash";
   import Papa from "papaparse";
   import { onMount } from "svelte";
+  import { currentTime, paused } from "../store.js";
 
-  let data;
   let labelData;
-  let keys = ["pos", "label", "start", "end", "duration", "stab_pct"];
+  const keys = ["pos", "label", "start", "end", "duration", "stab_pct"];
 
   function transform(data) {
     // What frame did it start, and what frame did it end.
@@ -38,7 +38,7 @@
 
   onMount(async () => {
     let resp = await fetch("pred.json");
-    data = await resp.json();
+    let data = await resp.json();
     labelData = transform(data);
   });
 </script>
@@ -60,7 +60,11 @@
     </thead>
     <tbody>
       {#each labelData as row}
-        <tr>
+        <tr
+          on:click={() => {
+            $paused = true;
+            $currentTime = row.start / 60;
+          }}>
           {#each keys as key}
             <td>{row[key]}</td>
           {/each}

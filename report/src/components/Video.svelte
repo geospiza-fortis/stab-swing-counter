@@ -1,9 +1,12 @@
 <script>
-  let data;
-  let currentTime = 0;
-  let paused = true;
+  import { currentTime, paused } from "../store.js";
 </script>
 
-<video src="labeled.mp4" type="video/mp4" controls bind:currentTime bind:paused>
+<video
+  src="labeled.mp4"
+  type="video/mp4"
+  controls
+  bind:currentTime={$currentTime}
+  bind:paused={$paused}>
   <track kind="captions" />
 </video>
