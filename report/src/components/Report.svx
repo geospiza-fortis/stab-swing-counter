@@ -6,8 +6,8 @@
 
 # Counting swings and stabs
 
-I found an interesting thread of someone curious about the [probability of
-attack
+I found an thread on the MapleLegends forums where the author was curious about
+the [probability of attack
 animations](https://forum.maplelegends.com/index.php?threads/attack-animation-probabilities.36648/).
 
 It is possible to programmatically count the number of swings and stabs of
