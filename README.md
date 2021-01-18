@@ -22,4 +22,10 @@ classifier.
 
 ```bash
 python .\main.py train-classifier .\data\labeled\spear\ data/model/spear_logistic .\data\templates\stab.png .\data\templates\swing.png
+
+python .\main.py evaluate-model .\data\output\spear_cropped\ .\data\output\spear_eval\ data/model/spear_logistic .\data\templates\stab.png .\data\templates\swing.png
+
+python .\main.py evaluate-model .\data\output\polearm_cropped\ .\data\output\polearm_eval\ data/model/spear_logistic .\data\templates\stab.png .\data\templates\swing.png
+
+python .\main.py evaluate-video .\data\input\spear.mkv .\data\output\spear_eval_video\ data/model/spear_logistic .\data\templates\stab.png .\data\templates\swing.png
 ```

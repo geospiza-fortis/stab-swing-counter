@@ -213,7 +213,6 @@ def evaluate_model(input, output, model_input, stab, swing):
 
     data = []
     for path in tqdm(sorted(Path(input).glob("**/*.png"))):
-        label_class = path.parent.name
         img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
         row = np.append(
             get_template_features(stab_img, img), get_template_features(swing_img, img)
@@ -249,6 +248,61 @@ def evaluate_model(input, output, model_input, stab, swing):
         video.write(img)
     cv.destroyAllWindows()
     video.release()
+
+
+@cli.command()
+@click.argument("input", type=click.Path(dir_okay=False, exists=True))
+@click.argument("output", type=click.Path(file_okay=False))
+@click.argument("model_input", type=click.Path(file_okay=False, exists=True))
+@click.argument("stab", type=click.Path(dir_okay=True, exists=True))
+@click.argument("swing", type=click.Path(dir_okay=True, exists=True))
+def evaluate_video(input, output, model_input, stab, swing):
+    model_input = Path(model_input)
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+
+    stab_img = cv.imread(str(stab), cv.IMREAD_GRAYSCALE)
+    swing_img = cv.imread(str(swing), cv.IMREAD_GRAYSCALE)
+
+    with (model_input / "model.pkl").open("rb") as fp:
+        clf = pickle.load(fp)
+    labels = json.loads((model_input / "labels.json").read_text())
+
+    cap = cv.VideoCapture(input)
+    fourcc = cv.VideoWriter_fourcc(*"mp4v")
+    video = cv.VideoWriter(f"{output}/labeled.mp4", fourcc, 60, (300, 300))
+
+    pred = []
+    pred_label = []
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        upper_left = ((W // 2) - 250, (H // 2 + 50))
+        lower_right = ((W // 2) + 50, (H // 2 + 350))
+        img = gray[upper_left[1] : lower_right[1], upper_left[0] : lower_right[0]]
+        row = np.append(
+            get_template_features(stab_img, img), get_template_features(swing_img, img)
+        )
+        y = clf.predict_proba(row.reshape(1, -1)).reshape(-1)
+        label = labels[str(clf.predict(row.reshape(1, -1))[0])]
+        pred.append(y)
+        pred_label.append(label)
+        font = cv.FONT_HERSHEY_SIMPLEX
+        img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+        cv.putText(img, label, (10, 50), font, 2, (0, 0, 0), 2, cv.LINE_AA)
+        video.write(img)
+        if len(pred) % 600 == 0:
+            print(f"iteration {len(pred)}")
+    print("done collecting frames")
+    cap.release()
+    video.release()
+    cv.destroyAllWindows()
+
+    np.savetxt(f"{output}/pred.csv", np.array(pred), delimiter=",")
+    (output / "pred.json").write_text(json.dumps(pred_label))
 
 
 if __name__ == "__main__":
