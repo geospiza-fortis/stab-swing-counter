@@ -6,11 +6,15 @@
 
 # Counting swings and stabs
 
-It is possible to count the number of swings and stabs of attacks from video
-recordings. Here's how it can be done. I tested this with a pair of skiis for
-the duration of a single booster.
+I found an interesting thread of someone curious about the [probability of
+attack
+animations](https://forum.maplelegends.com/index.php?threads/attack-animation-probabilities.36648/).
 
-The quality of the video has been heavily compressed for performance.
+It is possible to programmatically count the number of swings and stabs of
+attacks from video recordings, without resorting to packet sniffing or reversing
+game assets. I tested this with a pair of [Sky
+Skis](https://maplelegends.com/lib/equip?id=1432018) for the duration of a
+single [booster](https://maplelegends.com/lib/skill?id=1301004).
 
 <Plot />
 
