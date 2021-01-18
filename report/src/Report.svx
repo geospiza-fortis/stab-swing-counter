@@ -1,0 +1,14 @@
+<script>
+  import Plot from "./Plot.svelte"
+  import StateChange from "./StateChange.svelte"
+</script>
+
+# Counting swings and stabs
+
+It is possible to count the number of swings and stabs of attacks from video
+recordings. Here's how it can be done. I tested this with a pair of skiis for
+the duration of a single booster.
+
+<Plot />
+
+<StateChange />
