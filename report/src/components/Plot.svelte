@@ -2,9 +2,43 @@
   import { zip } from "lodash";
   import Papa from "papaparse";
   import { onMount } from "svelte";
+  import { currentTime, paused } from "../store.js";
 
   let predData;
   let plotElement;
+  let plot;
+  let range = [0, 1200];
+  let frame = 0;
+
+  // we have to make sure we're in a consistent state when updating the range,
+  // otherwise fall prey to infinite loops.
+  $: $paused || (frame = Math.floor($currentTime * 60));
+  $: !$paused && plot && updateRange(plotElement, range, frame);
+
+  function updateRange(element, range, frame) {
+    let size = range[1] - range[0];
+    // keep the current frame in the middle of the window
+    let x0 = frame - size / 2;
+    let x1 = frame + size / 2;
+    let newRange = [x0, x1];
+
+    // must change by a certain percentage before moving the slider
+    if (Math.abs(range[0] - x0) / size < 0.3) {
+      return;
+    }
+
+    Plotly.relayout(element, "xaxis.range", newRange);
+  }
+
+  $: predData &&
+    plotElement &&
+    Plotly.Fx.hover(
+      plotElement,
+      [0, 1, 2].map(trace => ({
+        curveNumber: trace,
+        pointNumber: frame
+      }))
+    );
 
   function transform(data, args) {
     return zip(...data).map((row, i) => ({ y: row, ...args[i] }));
@@ -14,7 +48,7 @@
     let resp = await fetch("pred.csv");
     let data = await resp.text();
     predData = Papa.parse(data).data;
-    let plot = new Plotly.newPlot(
+    plot = new Plotly.newPlot(
       plotElement,
       transform(predData, [
         { name: "other" },
@@ -24,7 +58,7 @@
       {
         title: "Probability of being in an animation state",
         xaxis: {
-          range: [0, 1200],
+          range: range,
           rangeselector: { visible: true },
           rangeslider: {}
         },
@@ -34,8 +68,18 @@
           b: 50,
           t: 50
         }
-      }
+      },
+      { responsive: true }
     );
+    plotElement.on("plotly_relayout", ev => {
+      range = ev["xaxis.range"];
+    });
+    plotElement.on("plotly_click", ev => {
+      // grab an arbitrary trace
+      let trace = ev.points[0];
+      $currentTime = (trace.pointNumber - 1) / 60;
+      $paused = true;
+    });
   });
 </script>
 
