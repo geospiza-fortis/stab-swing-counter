@@ -1,5 +1,5 @@
 <script>
-  import Report from "./Report.svx";
+  import Report from "./components/Report.svx";
 </script>
 
 <style>
