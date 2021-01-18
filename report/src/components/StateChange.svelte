@@ -1,6 +1,5 @@
 <script>
   import { zip, chunk } from "lodash";
-  import Papa from "papaparse";
   import { onMount } from "svelte";
   import { currentTime, paused } from "../store.js";
 
@@ -9,6 +8,7 @@
 
   export let rowId = 0;
   export let paginationSize = 6;
+  $: rowId = labelData.findIndex(row => row.start > $currentTime * 60);
   $: idx = rowId ? Math.floor(rowId / paginationSize) : 0;
   $: chunked = chunk(labelData, paginationSize);
   $: total = labelData.length;
@@ -74,7 +74,7 @@
           on:click={() => {
             rowId = row.pos;
             $paused = true;
-            $currentTime = row.start / 60;
+            $currentTime = (row.start - 1) / 60;
           }}
           class={rowId == row.pos ? 'table-active' : ''}>
           {#each keys as key}
