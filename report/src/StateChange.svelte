@@ -5,7 +5,7 @@
 
   let data;
   let labelData;
-  let keys = ["label", "start", "end"];
+  let keys = ["pos", "label", "start", "end", "duration", "stab_pct"];
 
   function transform(data) {
     // What frame did it start, and what frame did it end.
@@ -16,7 +16,18 @@
       let e = data[i];
       if (e != value) {
         if (value != "other") {
-          res.push({ label: value, start: start, end: i });
+          res.push({
+            pos: res.length,
+            label: value,
+            start: start,
+            end: i,
+            // time since the last attack
+            duration: res.length > 0 ? start - res[res.length - 1].start : 0,
+            stab_pct: (
+              (res.filter(x => x.label == "stab").length + (value == "stab")) /
+              (res.length + 1)
+            ).toFixed(2)
+          });
         }
         start = i;
         value = e;
