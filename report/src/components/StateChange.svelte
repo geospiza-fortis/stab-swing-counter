@@ -1,11 +1,29 @@
 <script>
-  import { zip } from "lodash";
+  import { zip, chunk } from "lodash";
   import Papa from "papaparse";
   import { onMount } from "svelte";
   import { currentTime, paused } from "../store.js";
 
-  let labelData;
+  let labelData = [];
   const keys = ["pos", "label", "start", "end", "duration", "stab_pct"];
+
+  export let rowId = 0;
+  export let paginationSize = 6;
+  $: idx = rowId ? Math.floor(rowId / paginationSize) : 0;
+  $: chunked = chunk(labelData, paginationSize);
+  $: total = labelData.length;
+  $: pages = chunked.length;
+
+  function prev() {
+    if (idx > 0) {
+      idx--;
+    }
+  }
+  function next() {
+    if (idx < pages - 1) {
+      idx++;
+    }
+  }
 
   function transform(data) {
     // What frame did it start, and what frame did it end.
@@ -43,28 +61,22 @@
   });
 </script>
 
-<style>
-  table,
-  th,
-  td {
-    border: 1px solid;
-  }
-</style>
-
-{#if labelData}
-  <table>
+{#if pages}
+  <table class="table table-sm table-bordered">
     <thead>
       {#each keys as key}
         <th>{key}</th>
       {/each}
     </thead>
     <tbody>
-      {#each labelData as row}
+      {#each chunked[idx] as row}
         <tr
           on:click={() => {
+            rowId = row.pos;
             $paused = true;
             $currentTime = row.start / 60;
-          }}>
+          }}
+          class={rowId == row.pos ? 'table-active' : ''}>
           {#each keys as key}
             <td>{row[key]}</td>
           {/each}
@@ -72,4 +84,23 @@
       {/each}
     </tbody>
   </table>
+  <div class="btn-group" role="group">
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      disabled={!(idx > 0)}
+      on:click={prev}>
+      Prev
+    </button>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      disabled={!(idx < pages - 1)}
+      on:click={next}>
+      Next
+    </button>
+  </div>
+  <div>
+    <p>{total} rows - page {idx + 1} of {pages}</p>
+  </div>
 {/if}

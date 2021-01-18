@@ -12,8 +12,15 @@ the duration of a single booster.
 
 The quality of the video has been heavily compressed for performance.
 
-<Video />
-
 <Plot />
 
-<StateChange />
+<div class="container">
+  <div class="row">
+    <div class="col" style="text-align: center">
+      <Video />
+    </div>
+    <div class="col">
+      <StateChange />
+    </div>
+  </div>
+</div>
