@@ -14,4 +14,8 @@ game assets. I tested this with a pair of [Sky
 Skis](https://maplelegends.com/lib/equip?id=1432018) for the duration of a
 single [booster](https://maplelegends.com/lib/skill?id=1301004).
 
+Find the [source here](https://github.com/geospiza-fortis/stab-swing-counter).
+This is a work in progress. I still need to tune the pattern-matching model,
+summarize the data, and do a little write-up on how this works.
+
 <Player />
