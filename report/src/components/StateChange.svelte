@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import { currentTime, paused } from "../store.js";
 
+  export let src = "pred.json";
   let labelData = [];
   const keys = [
     "label",
@@ -18,9 +19,10 @@
 
   export let rowId = 0;
   export let paginationSize = 6;
-  $: rowId = labelData.findIndex(
+  $: foundIndex = labelData.findIndex(
     row => row.start >= Math.floor($currentTime * 60)
   );
+  $: rowId = foundIndex > 0 ? foundIndex : labelData.length - 1;
   $: idx = rowId ? Math.floor(rowId / paginationSize) : 0;
   $: chunked = chunk(labelData, paginationSize);
   $: total = labelData.length;
@@ -72,7 +74,7 @@
   }
 
   onMount(async () => {
-    let resp = await fetch("pred.json");
+    let resp = await fetch(src);
     let data = await resp.json();
     labelData = transform(data);
   });

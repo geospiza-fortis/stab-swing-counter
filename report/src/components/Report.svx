@@ -1,7 +1,5 @@
 <script>
-  import Video from "./Video.svelte"
-  import Plot from "./Plot.svelte"
-  import StateChange from "./StateChange.svelte"
+  import Player from "./Player.svelte"
 </script>
 
 # Counting swings and stabs
@@ -16,15 +14,4 @@ game assets. I tested this with a pair of [Sky
 Skis](https://maplelegends.com/lib/equip?id=1432018) for the duration of a
 single [booster](https://maplelegends.com/lib/skill?id=1301004).
 
-<Plot />
-
-<div class="container">
-  <div class="row">
-    <div class="col" style="text-align: center">
-      <Video />
-    </div>
-    <div class="col">
-      <StateChange />
-    </div>
-  </div>
-</div>
+<Player />

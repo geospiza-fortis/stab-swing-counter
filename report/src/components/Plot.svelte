@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { currentTime, paused } from "../store.js";
 
+  export let src = "pred.csv";
   let predData;
   let plotElement;
   let plot;
@@ -45,7 +46,7 @@
   }
 
   onMount(async () => {
-    let resp = await fetch("pred.csv");
+    let resp = await fetch(src);
     let data = await resp.text();
     predData = Papa.parse(data).data;
     plot = new Plotly.newPlot(
