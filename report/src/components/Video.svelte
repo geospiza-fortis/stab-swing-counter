@@ -8,6 +8,8 @@
   {src}
   type="video/mp4"
   controls
+  webkit-playsinline
+  playsinline
   bind:currentTime={$currentTime}
   bind:paused={$paused}>
   <track kind="captions" />
