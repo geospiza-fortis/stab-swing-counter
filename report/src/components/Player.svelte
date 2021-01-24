@@ -8,6 +8,7 @@
     return await data.json();
   }
   let trialId = "00";
+  let controls = true;
 </script>
 
 {#await fetchManifest() then manifest}
@@ -33,11 +34,17 @@
     <div class="row">
       <div class="col" style="text-align: center">
         <Video
+          {controls}
           src={`https://storage.googleapis.com/geospiza/stab-swing-counter/v1/output/${trialId}/output.mp4`} />
+        <label>
+          <input type="checkbox" bind:checked={controls} />
+          Show media controls
+        </label>
       </div>
       <div class="col">
         <StateChange src={`trial/${trialId}/pred.json`} />
       </div>
     </div>
   </div>
+
 {/await}
