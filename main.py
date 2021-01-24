@@ -1,20 +1,20 @@
 import json
+import pickle
 from pathlib import Path
 
 import click
 import cv2 as cv
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from tqdm import tqdm
 
-
-# 1080 x 1920
+# 1080 x 1920 is the default resolution of the hd client
 H = 1080
 W = 1920
-
-# renamed these to spear.mkv and polearm.mkv respectively
-# SPEAR = "data/input/2021-01-16 21-38-22.mkv"
-# POLEARM = "data/input/2021-01-16 21-41-58.mkv"
 
 
 @click.group()
@@ -100,49 +100,6 @@ def prepare_samples(input, output, offset_x, frames):
     cv.destroyAllWindows()
 
 
-def mse(a, b):
-    """Mean Squared Error."""
-    return ((a - b) ** 2).mean()
-
-
-@cli.command()
-@click.argument("input", type=click.Path(file_okay=False, exists=True))
-@click.argument("output", type=click.Path(file_okay=False))
-@click.argument("stab", type=int)
-@click.argument("swing", type=int)
-def calculate_diff(input, output, stab, swing):
-    input = Path(input)
-    output = Path(output)
-    output.mkdir(parents=True, exist_ok=True)
-
-    # we know the naming convention
-    def copy_load(idx):
-        name = f"img_{idx:05}.png"
-        img = cv.imread(str(input / name), cv.IMREAD_GRAYSCALE)
-        cv.imwrite(str(output / name), img)
-        return img
-
-    stab_img = copy_load(stab)
-    swing_img = copy_load(swing)
-
-    stab_diff = []
-    swing_diff = []
-    for path in tqdm(sorted(Path(input).glob("*.png"))):
-        img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
-        # method may not work well if the background or character position changes
-        stab_diff.append(mse(stab_img, img))
-        swing_diff.append(mse(swing_img, img))
-
-    with (output / "data.json").open("w") as fp:
-        json.dump(dict(stab=stab_diff, swing=swing_diff), fp, indent=2)
-
-    x = list(range(len(stab_diff)))
-    plt.plot(x, stab_diff, label="stab")
-    plt.plot(x, swing_diff, label="swing")
-    plt.legend()
-    plt.savefig(f"{output}/mse.png")
-
-
 # https://docs.opencv.org/master/d4/dc6/tutorial_py_template_matching.html
 def get_template_features(template, img):
     # squared differences
@@ -155,13 +112,6 @@ def get_template_features(template, img):
     # v.rectangle(img,top_left, bottom_right, 255, 2)
     # let's not even use the location, and just use the min value
     return np.array([min_val])
-
-
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
-import pickle
 
 
 @cli.command()
@@ -183,7 +133,9 @@ def train_classifier(input, output, templates):
     for path in tqdm(sorted(Path(input).glob("**/*.png"))):
         label_class = path.parent.name
         img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
-        row = np.array([get_template_features(tmpl, img) for tmpl in template_img]).reshape(-1)
+        row = np.array(
+            [get_template_features(tmpl, img) for tmpl in template_img]
+        ).reshape(-1)
         data.append(row)
         labels.append(label_class)
 
@@ -234,7 +186,9 @@ def evaluate_model(input, output, model_input, templates):
     data = []
     for path in tqdm(sorted(Path(input).glob("**/*.png"))):
         img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
-        row = np.array([get_template_features(tmpl, img) for tmpl in template_img]).reshape(-1)
+        row = np.array(
+            [get_template_features(tmpl, img) for tmpl in template_img]
+        ).reshape(-1)
         data.append(row)
 
     X = np.array(data)
@@ -302,7 +256,9 @@ def evaluate_video(input, output, model_input, templates, offset_x):
         upper_left = ((W // 2) + offset_x, (H // 2 + 75))
         lower_right = ((W // 2) + offset_x + 300, (H // 2 + 375))
         img = gray[upper_left[1] : lower_right[1], upper_left[0] : lower_right[0]]
-        row = np.array([get_template_features(tmpl, img) for tmpl in template_img]).reshape(-1)
+        row = np.array(
+            [get_template_features(tmpl, img) for tmpl in template_img]
+        ).reshape(-1)
         y = clf.predict_proba(row.reshape(1, -1)).reshape(-1)
         label = labels[str(clf.predict(row.reshape(1, -1))[0])]
         pred.append(y)
