@@ -22,7 +22,23 @@ python run_compress.py
 python run_copy.py
 ```
 
-```
-python main.py train data/v1/labeled data/v1/prep data/v1/model/logistic_sliding data/v1/templates --window 4
-python main.py evaluate data/v1/prep data/v1/model_eval_sliding data/v1/model/logistic_sliding data/v1/templates --window 4 --batch-size 60
+```powershell
+# powershell uses backticks for continuations
+python main.py train `
+    data/v1/labeled `
+    data/v1/prep `
+    data/v1/model/logistic_sliding `
+    data/v1/templates `
+    --window 4 `
+    --include-pos
+
+python main.py evaluate `
+    data/v1/prep `
+    data/v1/model_eval_sliding `
+    data/v1/model/logistic_sliding `
+    data/v1/templates `
+    --window 4 `
+    --include-pos `
+    --batch-size 60 `
+    --input-type image
 ```

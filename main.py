@@ -18,7 +18,7 @@ W = 1920
 
 
 # https://docs.opencv.org/master/d4/dc6/tutorial_py_template_matching.html
-def get_template_features(template, img, include_pos=False):
+def get_template_features(template, img, include_pos):
     # squared differences
     w, h = template.shape[::-1]
     res = cv.matchTemplate(img, template, cv.TM_SQDIFF)
@@ -29,6 +29,33 @@ def get_template_features(template, img, include_pos=False):
     else:
         # let's not even use the location, and just use the min value
         return np.array([min_val])
+
+
+def read_templates(templates):
+    template_img = []
+    for path in sorted(Path(templates).glob("*.png")):
+        img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
+        # hacky, but lets put the name first so we can normalize
+        if "name" in path.name:
+            template_img = [img] + template_img
+        else:
+            template_img.append(img)
+    return template_img
+
+
+def create_template_feature(img, template_img, include_pos=False):
+    features = [get_template_features(tmpl, img, include_pos) for tmpl in template_img]
+    if include_pos:
+        # normalize the features against the name feature to get relative
+        # positions in the frame which is fixed underneath the player
+        new_features = []
+        # TODO: this could (or maybe should) be vectorized...
+        relative = np.array(features[0])
+        for feature in features[1:]:
+            f = np.array(feature) - relative
+            new_features.append(f)
+        features = new_features
+    return np.array(features).reshape(-1)
 
 
 def generate_images(input_path):
@@ -142,15 +169,13 @@ def prepare_samples(input, output, offset_x, frames):
 @click.argument("output", type=click.Path(file_okay=False))
 @click.argument("templates", type=click.Path(file_okay=False, exists=True))
 @click.option("--window", type=int, default=8)
-def train(input, input_full, output, templates, window):
+@click.option("--include-pos/--no-include-pos", default=False)
+def train(input, input_full, output, templates, window, include_pos):
     input = Path(input)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
 
-    template_img = []
-    for path in Path(templates).glob("*.png"):
-        template_img.append(cv.imread(str(path), cv.IMREAD_GRAYSCALE))
-
+    template_img = read_templates(templates)
     # find the frames we need to read into memory and cache them
     def parse_number(name):
         return int(name.split("_")[-1].split(".")[0].lstrip("0") or "0")
@@ -167,9 +192,7 @@ def train(input, input_full, output, templates, window):
             if frame.name in frames:
                 continue
             img = cv.imread(str(frame), cv.IMREAD_GRAYSCALE)
-            feature = np.array(
-                [get_template_features(tmpl, img) for tmpl in template_img]
-            ).reshape(-1)
+            feature = create_template_feature(img, template_img, include_pos)
             frames[frame.name] = feature
 
     data = []
@@ -215,19 +238,26 @@ def train(input, input_full, output, templates, window):
 @click.argument("model_input", type=click.Path(file_okay=False, exists=True))
 @click.argument("templates", type=click.Path(file_okay=False, exists=True))
 @click.option("--window", type=int, default=8)
+@click.option("--include-pos/--no-include-pos", default=False)
 @click.option("--batch-size", type=int, default=128)
 @click.option("--input-type", type=click.Choice(["video", "image"]), default="video")
 @click.option("--offset-x", default=-200)
 def evaluate(
-    input, output, model_input, templates, window, batch_size, input_type, offset_x
+    input,
+    output,
+    model_input,
+    templates,
+    window,
+    include_pos,
+    batch_size,
+    input_type,
+    offset_x,
 ):
     model_input = Path(model_input)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
 
-    template_img = []
-    for path in Path(templates).glob("*.png"):
-        template_img.append(cv.imread(str(path), cv.IMREAD_GRAYSCALE))
+    template_img = read_templates(templates)
 
     with (model_input / "model.pkl").open("rb") as fp:
         clf = pickle.load(fp)
@@ -250,9 +280,7 @@ def evaluate(
     )
 
     for frame in tqdm(generate):
-        feature = np.array(
-            [get_template_features(tmpl, frame) for tmpl in template_img]
-        ).reshape(-1)
+        feature = create_template_feature(frame, template_img, include_pos)
         frames.append(frame)
         history.append(feature)
         if len(history) < window:
