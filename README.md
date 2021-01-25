@@ -42,3 +42,83 @@ python main.py evaluate `
     --batch-size 60 `
     --input-type image
 ```
+
+```powershell
+# powershell uses backticks for continuations
+python main.py train `
+    data/v1/labeled `
+    data/v1/prep `
+    data/v1/model/dt `
+    data/v1/templates `
+    --window 8 `
+    --include-pos `
+    --model decisiontree
+
+python main.py evaluate `
+    data/v1/prep `
+    data/v1/model_eval_sliding `
+    data/v1/model/dt `
+    data/v1/templates `
+    --window 8 `
+    --include-pos `
+    --batch-size 60 `
+    --input-type image
+```
+
+```powershell
+# powershell uses backticks for continuations
+python main.py train `
+    data/v1/labeled `
+    data/v1/prep `
+    data/v1/model/dt `
+    data/v1/templates `
+    --window 8 `
+    --no-include-pos `
+    --model decisiontree
+
+python main.py evaluate `
+    data/v1/prep `
+    data/v1/model_eval_sliding `
+    data/v1/model/dt `
+    data/v1/templates `
+    --window 8 `
+    --no-include-pos `
+    --batch-size 60 `
+    --input-type image
+```
+
+```powershell
+# powershell uses backticks for continuations
+python main.py train `
+    data/v1/labeled `
+    data/v1/prep `
+    data/v1/model/ridge `
+    data/v1/templates `
+    --window 4 `
+    --no-include-pos `
+    --model ridge
+
+python main.py evaluate `
+    data/v1/prep `
+    data/v1/model_eval_sliding `
+    data/v1/model/ridge `
+    data/v1/templates `
+    --window 4 `
+    --no-include-pos `
+    --batch-size 60 `
+    --input-type image
+```
+
+This works great (I think).
+
+```powershell
+python main.py evaluate `
+    data/v1/input/01.mkv `
+    data/v1/model_eval_sliding `
+    data/v1/model/ridge `
+    data/v1/templates `
+    --window 4 `
+    --no-include-pos `
+    --batch-size 300 `
+    --input-type video
+```

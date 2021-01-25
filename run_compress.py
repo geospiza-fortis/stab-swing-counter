@@ -9,7 +9,8 @@ data_root = Path("data/v1")
 videos = (data_root / "output").glob("**/labeled.mp4")
 for video in videos:
     print(f"running for {video}")
-    os.remove(video.parent / "output.mp4")
+    if (video.parent / "output.mp4").exists():
+        os.remove(video.parent / "output.mp4")
     run(
         (
             f"{ffmpeg} -i {video} -vcodec libx264 -crf 24 " f"{video.parent}/output.mp4"

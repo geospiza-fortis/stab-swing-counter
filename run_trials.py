@@ -18,8 +18,8 @@ for video in videos:
     cmd = (
         f"{python} main.py evaluate "
         f"{video} {data_root}/output/{video.name.split('.')[0]} "
-        f"{data_root}/model/logistic_sliding {data_root}/templates "
-        f"--offset-x {-175 + offset} --window 4 --batch-size 300"
+        f"{data_root}/model/ridge {data_root}/templates "
+        f"--offset-x {-175 + offset} --window 4 --batch-size 300 --no-include-pos"
     )
     print(cmd)
     run(cmd.split(), check=True)

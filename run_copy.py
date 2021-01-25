@@ -8,6 +8,8 @@ shutil.rmtree("report/public/trial", ignore_errors=True)
 shutil.copytree("data/v1/output", "report/public/trial")
 for path in Path("report/public/trial").glob("**/*.mp4"):
     os.remove(path)
+for path in Path("report/public/trial").glob("**/probs_*.png"):
+    os.remove(path)
 
 manifest = []
 for path in Path("report/public/trial").glob("*"):

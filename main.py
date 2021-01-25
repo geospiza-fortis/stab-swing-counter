@@ -6,7 +6,8 @@ import click
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -90,7 +91,11 @@ def generate_capture_frames(input, offset_x, crop=True):
 
 def evaluate_batch(clf, labels, data, frames, video, output, batch_num, plot=False):
     X = np.array(data)
-    y = clf.predict_proba(X)
+    # check if it has a decision function first
+    if hasattr(clf, "decision_function"):
+        y = clf.decision_function(X)
+    else:
+        y = clf.predict_proba(X)
     y_label = [labels[str(p)] for p in clf.predict(X)]
 
     for img, label in zip(frames, y_label):
@@ -170,7 +175,12 @@ def prepare_samples(input, output, offset_x, frames):
 @click.argument("templates", type=click.Path(file_okay=False, exists=True))
 @click.option("--window", type=int, default=8)
 @click.option("--include-pos/--no-include-pos", default=False)
-def train(input, input_full, output, templates, window, include_pos):
+@click.option(
+    "--model",
+    type=click.Choice(["logistic", "decisiontree", "ridge"]),
+    default="logistic",
+)
+def train(input, input_full, output, templates, window, include_pos, model):
     input = Path(input)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
@@ -215,13 +225,19 @@ def train(input, input_full, output, templates, window, include_pos):
     print(f"data in shape {X.shape}")
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    clf = LogisticRegression().fit(X_train, y_train)
+    models = {
+        "logistic": LogisticRegression,
+        "ridge": RidgeClassifierCV,
+        "decisiontree": DecisionTreeClassifier,
+    }
+
+    clf = models[model]().fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     print(f"accuracy: {acc} with {len(y_test)} samples")
 
     # retrain on all the data
-    clf = LogisticRegression(max_iter=10000).fit(X, y)
+    clf = models[model]().fit(X, y)
     acc = accuracy_score(y, clf.predict(X))
     print(f"accuracy: {acc} on all data of length {len(y)}")
 
@@ -292,8 +308,8 @@ def evaluate(
             y, y_label = evaluate_batch(
                 clf, labels, data, frames, video, output, batch_num, True
             )
-            pred_prob.append(y)
-            pred_label.append(y_label)
+            pred_prob += y.tolist()
+            pred_label += y_label
             data = []
             frames = []
             batch_num += 1
@@ -301,10 +317,10 @@ def evaluate(
     y, y_label = evaluate_batch(
         clf, labels, data, frames, video, output, batch_num, True
     )
-    pred_prob.append(y)
-    pred_label.append(y_label)
+    pred_prob += y.tolist()
+    pred_label += y_label
 
-    np.savetxt(f"{output}/pred.csv", y, delimiter=",")
+    np.savetxt(f"{output}/pred.csv", np.array(pred_prob), delimiter=",")
     (output / "pred.json").write_text(json.dumps(pred_label))
 
     cv.destroyAllWindows()

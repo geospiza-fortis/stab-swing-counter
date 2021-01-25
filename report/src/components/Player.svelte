@@ -9,6 +9,16 @@
   }
   let trialId = "00";
   let controls = true;
+
+  async function fetchText(src) {
+    let resp = await fetch(src);
+    return await resp.text();
+  }
+
+  async function fetchJson(src) {
+    let resp = await fetch(src);
+    return await resp.json();
+  }
 </script>
 
 {#await fetchManifest() then manifest}
