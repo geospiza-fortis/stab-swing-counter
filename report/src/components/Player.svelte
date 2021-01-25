@@ -38,7 +38,9 @@
   </nav>
 
   <h2>Data for trial {trialId}</h2>
-  <Plot src={`trial/${trialId}/pred.csv`} />
+  {#await fetchText(`trial/${trialId}/pred.csv`) then data}
+    <Plot {data} />
+  {/await}
 
   <div class="container">
     <div class="row">
@@ -52,7 +54,9 @@
         </label>
       </div>
       <div class="col">
-        <StateChange src={`trial/${trialId}/pred.json`} />
+        {#await fetchJson(`trial/${trialId}/pred.json`) then data}
+          <StateChange {data} />
+        {/await}
       </div>
     </div>
   </div>

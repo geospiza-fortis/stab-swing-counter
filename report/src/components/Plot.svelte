@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import { currentTime, paused } from "../store.js";
 
-  export let src = "pred.csv";
+  export let data;
   let predData;
   let plotElement;
   let plot;
@@ -32,7 +32,7 @@
   }
 
   $: predData &&
-    plotElement &&
+    plot &&
     Plotly.Fx.hover(
       plotElement,
       [0, 1, 2].map(trace => ({
@@ -46,18 +46,16 @@
   }
 
   onMount(async () => {
-    let resp = await fetch(src);
-    let data = await resp.text();
     predData = Papa.parse(data).data;
     plot = new Plotly.newPlot(
       plotElement,
       transform(predData, [
-        { name: "other" },
+        { name: "other", visible: "legendonly" },
         { name: "stab" },
         { name: "swing" }
       ]),
       {
-        title: "Probability of being in an animation state",
+        title: "Confidence of being in an animation state",
         xaxis: {
           range: range,
           rangeselector: { visible: true },

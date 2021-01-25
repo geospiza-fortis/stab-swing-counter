@@ -1,10 +1,8 @@
 <script>
   import { zip, chunk } from "lodash";
-  import { onMount } from "svelte";
   import { currentTime, paused } from "../store.js";
 
-  export let src = "pred.json";
-  let labelData = [];
+  export let data;
   const keys = [
     "label",
     "start",
@@ -19,10 +17,11 @@
 
   export let rowId = 0;
   export let paginationSize = 6;
+  $: labelData = data ? transform(data) : [];
   $: foundIndex = labelData.findIndex(
     row => row.start >= Math.floor($currentTime * 60)
   );
-  $: rowId = foundIndex > 0 ? foundIndex : labelData.length - 1;
+  $: rowId = foundIndex >= 0 ? foundIndex : labelData.length - 1;
   $: idx = rowId ? Math.floor(rowId / paginationSize) : 0;
   $: chunked = chunk(labelData, paginationSize);
   $: total = labelData.length;
@@ -72,12 +71,6 @@
     }));
     return res;
   }
-
-  onMount(async () => {
-    let resp = await fetch(src);
-    let data = await resp.json();
-    labelData = transform(data);
-  });
 </script>
 
 {#if pages}
