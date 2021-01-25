@@ -13,16 +13,13 @@ for video in videos:
         f" {video} {data_root}/templates/name.png --relative 932"
     )
     print(cmd)
-    res = run(
-        cmd.split(),
-        capture_output=True,
-    )
+    res = run(cmd.split(), capture_output=True, check=True)
     offset = int(res.stdout.decode())
     cmd = (
-        f"{python} main.py evaluate-video "
+        f"{python} main.py evaluate "
         f"{video} {data_root}/output/{video.name.split('.')[0]} "
-        f"{data_root}/model/logistic {data_root}/templates "
-        f"--offset-x {-175 + offset}"
+        f"{data_root}/model/logistic_sliding {data_root}/templates "
+        f"--offset-x {-175 + offset} --window 4 --batch-size 300"
     )
     print(cmd)
-    run(cmd.split())
+    run(cmd.split(), check=True)

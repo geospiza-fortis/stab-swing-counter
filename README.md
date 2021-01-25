@@ -9,8 +9,8 @@ templates and omitting the position.
 ```powershell
 python main.py watch '.\data\v1\input\00.mkv' --crop --offset-x -175
 python main.py prepare-samples '.\data\v1\input\00.mkv' data/v1/prep --offset-x -175 --frames 3600
-python main.py train-classifier data/v1/labeled data/v1/model/logistic data/v1/templates
-python main.py evaluate-model data/v1/prep data/v1/model_eval data/v1/model/logistic data/v1/templates
+python main.py train data/v1/labeled data/v1/model/logistic data/v1/templates
+python main.py evaluate data/v1/prep data/v1/model_eval data/v1/model/logistic data/v1/templates
 
 python main.py find-template '.\data\v1\input\00.mkv' '.\data\v1\templates\name.png'
 # 932
@@ -23,6 +23,6 @@ python run_copy.py
 ```
 
 ```
-python main.py train-sliding-classifier data/v1/labeled data/v1/prep data/v1/model/logistic data/v1/templates
-
+python main.py train data/v1/labeled data/v1/prep data/v1/model/logistic_sliding data/v1/templates --window 4
+python main.py evaluate data/v1/prep data/v1/model_eval_sliding data/v1/model/logistic_sliding data/v1/templates --window 4 --batch-size 60
 ```
