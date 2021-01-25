@@ -28,7 +28,7 @@
   video to that frame. Classification confidence is calculated by a
   <a
     href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifierCV.html#sklearn.linear_model.RidgeClassifierCV">
-    Ridge Regression model
+    Ridge classifier
   </a>
   trained on
   <a
