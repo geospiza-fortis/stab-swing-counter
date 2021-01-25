@@ -21,7 +21,25 @@
   }
 </script>
 
+<h2>Analysis for trial data</h2>
+
+<p>
+  Click on the video to begin. Clicking on the plot or table will bring the
+  video to that frame. Classification confidence is calculated by a
+  <a
+    href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifierCV.html#sklearn.linear_model.RidgeClassifierCV">
+    Ridge Regression model
+  </a>
+  trained on
+  <a
+    href="https://docs.opencv.org/master/d4/dc6/tutorial_py_template_matching.html">
+    template matching intensities
+  </a>
+  over a window of 4 frames.
+</p>
+
 {#await fetchManifest() then manifest}
+
   <nav>
     <ul class="nav">
       {#each manifest as trial}
@@ -37,7 +55,8 @@
     </ul>
   </nav>
 
-  <h2>Data for trial {trialId}</h2>
+  <h3 style="text-align:center;">Trial {trialId}</h3>
+
   {#await fetchText(`trial/${trialId}/pred.csv`) then data}
     <Plot {data} />
   {/await}

@@ -13,6 +13,8 @@ for path in Path("report/public/trial").glob("**/probs_*.png"):
 
 manifest = []
 for path in Path("report/public/trial").glob("*"):
+    if path.is_file():
+        continue
     manifest.append(path.name)
 Path("report/public/trial/manifest.json").write_text(json.dumps(manifest, indent=2))
 

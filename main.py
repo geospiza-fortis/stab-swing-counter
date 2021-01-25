@@ -117,7 +117,7 @@ def evaluate_batch(clf, labels, data, frames, video, output, batch_num, plot=Fal
     return y, y_label
 
 
-def transform_labels(data, threshold=10):
+def transform_labels(data, threshold=20):
     """Transform the labels for each frame in the video into a table of events.
     We omit events that do not seem plausible using the threshold."""
     res = []
@@ -156,6 +156,7 @@ def transform_labels(data, threshold=10):
             ),
         }
         for x in res
+        if x["diff"] > threshold
     ]
 
 

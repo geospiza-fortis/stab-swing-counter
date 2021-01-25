@@ -1,5 +1,23 @@
 <script>
   import Player from "./Player.svelte"
+  import Table from "./Table.svelte"
+
+  async function fetchJson(src) {
+    let resp = await fetch(src);
+    return await resp.json();
+  }
+
+  function withSummary(data) {
+    let res = {
+      name: "total",
+      stab: data.map(x => x.stab).reduce((x, y) => x + y),
+      swing: data.map(x => x.swing).reduce((x, y) => x + y),
+      total: data.map(x => x.total).reduce((x, y) => x + y)
+    };
+    res["stab_pct"] = (res.stab / res.total).toFixed(3);
+    res["swing_pct"] = (res.swing / res.total).toFixed(3);
+    return [...data, res];
+  }
 </script>
 
 # Counting swings and stabs
@@ -11,11 +29,16 @@ animations](https://forum.maplelegends.com/index.php?threads/attack-animation-pr
 It is possible to programmatically count the number of swings and stabs of
 attacks from video recordings, without resorting to packet sniffing or reversing
 game assets. I tested this with a pair of [Sky
-Skis](https://maplelegends.com/lib/equip?id=1432018) for the duration of a
-single [booster](https://maplelegends.com/lib/skill?id=1301004).
+Skis](https://maplelegends.com/lib/equip?id=1432018) using [booster for speed](https://maplelegends.com/lib/skill?id=1301004). The data suggests that the stab:swing ratio _is_ 2:3.
 
 Find the [source here](https://github.com/geospiza-fortis/stab-swing-counter).
-This is a work in progress. I still need to tune the pattern-matching model,
-summarize the data, and do a little write-up on how this works.
+
+## Summary of all trials
+
+{#await fetchJson("trial/summary.json") then data}
+
+  <Table data={withSummary(data)} />
+
+{/await}
 
 <Player />
