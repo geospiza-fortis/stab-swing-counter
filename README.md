@@ -114,7 +114,7 @@ This works great (I think).
 ```powershell
 python main.py evaluate `
     data/v1/input/01.mkv `
-    data/v1/model_eval_sliding `
+    data/v1/eval_01_ridge `
     data/v1/model/ridge `
     data/v1/templates `
     --window 4 `

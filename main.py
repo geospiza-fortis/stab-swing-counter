@@ -117,6 +117,48 @@ def evaluate_batch(clf, labels, data, frames, video, output, batch_num, plot=Fal
     return y, y_label
 
 
+def transform_labels(data, threshold=10):
+    """Transform the labels for each frame in the video into a table of events.
+    We omit events that do not seem plausible using the threshold."""
+    res = []
+    start = 0
+    value = "other"
+    for i, e in enumerate(data):
+        if e == value:
+            continue
+        if value != "other":
+            # must wait at least this many frames before the last change
+            diff = (start - res[-1]["start"]) if res else i
+            row = dict(
+                pos=len(res),
+                label=value,
+                start=start,
+                end=i,
+                diff=diff,
+                stab=(
+                    len([x for x in res if x["label"] == "stab"]) + int(value == "stab")
+                ),
+                swing=(
+                    len([x for x in res if x["label"] == "swing"])
+                    + int(value == "swing")
+                ),
+                total=len(res) + 1,
+            )
+            res.append(row)
+        start = i
+        value = e
+    return [
+        {
+            **x,
+            **dict(
+                stab_pct=round(x["stab"] / x["total"], 3),
+                swing_pct=round(x["swing"] / x["total"], 3),
+            ),
+        }
+        for x in res
+    ]
+
+
 @click.group()
 def cli():
     pass
@@ -325,6 +367,31 @@ def evaluate(
 
     cv.destroyAllWindows()
     video.release()
+
+
+@cli.command()
+@click.argument("input", type=click.Path(exists=True))
+def summarize(input):
+    paths = list(Path(input).glob("**/pred.json"))
+    summaries = []
+    for path in paths:
+        print(f"writing transformed data for {path}")
+        data = json.loads(path.read_text())
+        summary = transform_labels(data)
+        # write one for the local trial
+        (path.parent / "summary.json").write_text(json.dumps(summary, indent=2))
+        summaries.append(
+            dict(
+                name=path.parent.name,
+                **{
+                    k: v
+                    for k, v in summary[-1].items()
+                    if k in ["stab", "swing", "total", "stab_pct", "swing_pct"]
+                },
+            )
+        )
+    # and dump this to the current directoy
+    (Path(input) / "summary.json").write_text(json.dumps(summaries, indent=2))
 
 
 if __name__ == "__main__":

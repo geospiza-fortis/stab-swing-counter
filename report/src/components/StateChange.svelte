@@ -45,24 +45,25 @@
     let value = "other";
     for (let i = 0; i < data.length; i++) {
       let e = data[i];
-      if (e != value) {
-        if (value != "other") {
-          res.push({
-            pos: res.length,
-            label: value,
-            start: start,
-            end: i,
-            // time since the last attack
-            diff: res.length > 0 ? start - res[res.length - 1].start : 0,
-            stab: res.filter(x => x.label == "stab").length + (value == "stab"),
-            swing:
-              res.filter(x => x.label == "swing").length + (value == "swing"),
-            total: res.length + 1
-          });
-        }
-        start = i;
-        value = e;
+      if (e == value) {
+        continue;
       }
+      if (value != "other") {
+        res.push({
+          pos: res.length,
+          label: value,
+          start: start,
+          end: i,
+          // time since the last attack
+          diff: res.length > 0 ? start - res[res.length - 1].start : 0,
+          stab: res.filter(x => x.label == "stab").length + (value == "stab"),
+          swing:
+            res.filter(x => x.label == "swing").length + (value == "swing"),
+          total: res.length + 1
+        });
+      }
+      start = i;
+      value = e;
     }
     res = res.map(row => ({
       ...row,
